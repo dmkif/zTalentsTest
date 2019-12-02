@@ -1,0 +1,15 @@
+//LWHHFS   JOB   (),                                                    00010000
+//         CLASS=A,                                                     00020000
+//         MSGCLASS=X,                                                  00030000
+//         MSGLEVEL=(1,1),                                              00040000
+//         NOTIFY=&SYSUID,                                              00050000
+//         TIME=1440                                                    00060000
+//ST4      EXEC PGM=IKJEFT01,DYNAMNBR=75,TIME=100,REGION=6M             00070000
+//SYSPRINT DD SYSOUT=*                                                  00080000
+//SYSTSPRT DD SYSOUT=*                                                  00090000
+//SYSTERM  DD DUMMY                                                     00100000
+//SYSUADS  DD DSN=SYS1.UADS,DISP=SHR                                    00110000
+//SYSLBC   DD DSN=SYS1.BRODCAST,DISP=SHR                                00120000
+//SYSTSIN  DD *                                                         00130000
+ MOUNT FILESYSTEM('HFS.TCPIP.HFS') MOUNTPOINT('/usr/lpp/tcpip') -       00140000
+           TYPE(HFS) MODE(RDWR)                                         00150000

@@ -1,0 +1,117 @@
+//RALEYIP  JOB (FB3TR,60000,4365),'IPCS ALLOCATE',
+//             NOTIFY=RALEY,COND=(0,NE),
+//             CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1)
+//DSALC1  EXEC PGM=IDCAMS,REGION=512K
+//SYSPRINT DD  SYSOUT=*
+//STEPCAT  DD  DISP=SHR,DSN=MASTER1.CATALOG
+//DD1 DD UNIT=SYSDA,VOL=SER=VPMVSA,DISP=OLD
+//DD3 DD UNIT=SYSDA,VOL=SER=VPMVSB,DISP=OLD
+//SYSIN    DD  *
+  DEL SYS1.MAN1 FILE(DD1) CATALOG(MASTER1.CATALOG)
+  DEL SYS1.MAN2 FILE(DD1) CATALOG(MASTER1.CATALOG)
+  DEL IPOIPCS.DATA.SET.DIRECTRY -
+      FILE(DD3) CATALOG(MASTER1.CATALOG)
+  DEL IPOIPCS.PROBLEM.DIRECTRY -
+      FILE(DD3) CATALOG(MASTER1.CATALOG)
+ /********************************************/
+ /*            DEFINE SMF DATA SETS          */
+ /********************************************/
+  DEFINE   CLUSTER -
+             ( CONTROLINTERVALSIZE(4096) -
+               CYLINDERS(15) -
+               NAME(SYS1.MAN1) -
+               NONINDEXED -
+               RECORDSIZE(4086,32767) -
+               REUSE -
+               SHAREOPTIONS(2) -
+               SPANNED -
+               SPEED -
+               VOLUME(VPMVSA) ) -
+               CATALOG(MASTER1.CATALOG)
+  DEFINE   CLUSTER -
+             ( CONTROLINTERVALSIZE(4096) -
+               CYLINDERS(15) -
+               NAME(SYS1.MAN2) -
+               NONINDEXED -
+               RECORDSIZE(4086,32767) -
+               REUSE -
+               SHAREOPTIONS(2) -
+               SPANNED -
+               SPEED -
+               VOLUME(VPMVSA) ) -
+               CATALOG(MASTER1.CATALOG)
+ /********************************************/
+ /*            DEFINE IPCS DATA SET DIRECTORY*/
+ /********************************************/
+  DEFINE   CLUSTER -
+             ( NAME(IPOIPCS.DATA.SET.DIRECTRY) -
+               VOLUME(VPMVSA) -
+               INDEXED -
+               REUSE -
+               SHAREOPTIONS(1,3) ) -
+           DATA -
+             ( NAME(IPOIPCS.DATA.SET.DIRECTRY.DATA) -
+               CONTROLINTERVALSIZE(4096) -
+               RECORDS(5000,5000) -
+               KEYS(128,0) -
+               RECORDSIZE(256 3072) ) -
+           INDEX -
+             ( NAME(IPOIPCS.DATA.SET.DIRECTRY.INDEX) -
+               RECORDS(10,10) -
+               CONTROLINTERVALSIZE(2048) ) -
+               CATALOG(MASTER1.CATALOG)
+ /********************************************/
+ /*            DEFINE IPCS PROBLEM DIRECTORY */
+ /********************************************/
+  DEFINE   CLUSTER -
+             ( NAME(IPOIPCS.PROBLEM.DIRECTRY) -
+               VOLUME(VPMVSA) -
+               INDEXED -
+               CYLINDERS(5,5) -
+               KEYS(14 0) -
+               RECORDSIZE(225 952) -
+               SHAREOPTIONS(1) ) -
+           DATA -
+             ( NAME(IPOIPCS.PROBLEM.DIRECTRY.DATA) -
+               CONTROLINTERVALSIZE(4096) ) -
+           INDEX -
+             ( NAME(IPOIPCS.PROBLEM.DIRECTRY.INDEX) -
+               CONTROLINTERVALSIZE(4096) ) -
+               CATALOG(MASTER1.CATALOG)
+/*
+//*********************************************************************
+//* CREATE SEED RECORDS FOR IPCS DIRECTORY DATA SETS                  *
+//*********************************************************************
+//ISEED6  EXEC PGM=IEBDG,REGION=768K,COND=(0,LT)
+//SYSPRINT DD  SYSOUT=*
+//PDSEED   DD  DSN=&PDSEED,DISP=(NEW,PASS),
+//             UNIT=SYSALLDA,SPACE=(256,(1),,,ROUND),
+//             DCB=(RECFM=VB,LRECL=252,BLKSIZE=256)
+//DSDSEED  DD  DSN=&DSDSEED,DISP=(NEW,PASS),
+//             UNIT=SYSALLDA,SPACE=(416,(1),,,ROUND),
+//             DCB=(RECFM=VB,LRECL=412,BLKSIZE=416)
+//SYSIN    DD  *
+   DSD    OUTPUT=(PDSEED)
+   FD     NAME=PR,STARTLOC=20,LENGTH=05,PICTURE=05,'00000'
+   FD     NAME=F1,STARTLOC=01,LENGTH=02,PICTURE=02,'SV'
+   FD     NAME=F2,STARTLOC=129,LENGTH=12,PICTURE=12,'DUMYRECD0000'
+   CREATE QUANTITY=1,FILL=X'F0',NAME=(F1,PR)
+   END
+   DSD    OUTPUT=(DSDSEED)
+   CREATE QUANTITY=1,FILL=X'F0',NAME=(F2)
+   END
+/*
+//********************************************************************
+//* USE AMS TO REPRO IN THE SEED DATA SETS TO INITIALIZE THE CLUSTERS*
+//********************************************************************
+//IREPRO7 EXEC PGM=IDCAMS,REGION=768K,COND=(4,LT)
+//STEPCAT  DD  DISP=SHR,DSN=MASTER1.CATALOG
+//DSDSEED  DD  DSN=&DSDSEED,DISP=(OLD,PASS)
+//PDSEED   DD  DSN=&PDSEED,DISP=(OLD,PASS)
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD  *
+ REPRO INFILE(PDSEED) OUTDATASET(IPOIPCS.PROBLEM.DIRECTRY)
+ PRINT IDS(IPOIPCS.PROBLEM.DIRECTRY) DUMP
+ REPRO INFILE(DSDSEED) OUTDATASET(IPOIPCS.DATA.SET.DIRECTRY)
+ PRINT IDS(IPOIPCS.DATA.SET.DIRECTRY) DUMP
+/*
