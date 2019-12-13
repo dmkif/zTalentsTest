@@ -13,3 +13,4 @@
 //SYSTSIN  DD *                                                         00130000
  MOUNT FILESYSTEM('HFS.TCPIP.HFS') MOUNTPOINT('/usr/lpp/tcpip') -       00140000
            TYPE(HFS) MODE(RDWR)                                         00150000
+//* Testkommentar                                                       00160001
